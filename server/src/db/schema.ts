@@ -18,6 +18,11 @@ export const usersTable = sqliteTable(
     username: text("username").notNull().unique(),
     email: text("email").notNull().unique(),
     passwordHash: text("password_hash").notNull(),
+    role: text("role", { enum: ["user", "admin"] })
+      .notNull()
+      .default("user"),
+    balance: real("balance").notNull().default(1000),
+    totalWinnings: real("total_winnings").notNull().default(0),
     createdAt: integer("created_at", { mode: "timestamp" })
       .notNull()
       .$defaultFn(() => new Date()),
@@ -28,7 +33,7 @@ export const usersTable = sqliteTable(
   (table) => ({
     usernameIdx: uniqueIndex("users_username_idx").on(table.username),
     emailIdx: uniqueIndex("users_email_idx").on(table.email),
-  }),
+  })
 );
 
 // Markets table
@@ -52,7 +57,7 @@ export const marketsTable = sqliteTable(
   (table) => ({
     createdByIdx: index("markets_created_by_idx").on(table.createdBy),
     statusIdx: index("markets_status_idx").on(table.status),
-  }),
+  })
 );
 
 // Market Outcomes table
@@ -68,7 +73,7 @@ export const marketOutcomesTable = sqliteTable(
   },
   (table) => ({
     marketIdIdx: index("market_outcomes_market_id_idx").on(table.marketId),
-  }),
+  })
 );
 
 // Bets table
@@ -94,7 +99,7 @@ export const betsTable = sqliteTable(
     userIdIdx: index("bets_user_id_idx").on(table.userId),
     marketIdIdx: index("bets_market_id_idx").on(table.marketId),
     outcomeIdIdx: index("bets_outcome_id_idx").on(table.outcomeId),
-  }),
+  })
 );
 
 // Relations
@@ -117,14 +122,17 @@ export const marketsRelations = relations(marketsTable, ({ one, many }) => ({
   }),
 }));
 
-export const marketOutcomesRelations = relations(marketOutcomesTable, ({ one, many }) => ({
-  market: one(marketsTable, {
-    fields: [marketOutcomesTable.marketId],
-    references: [marketsTable.id],
-    relationName: "outcomes",
-  }),
-  bets: many(betsTable, { relationName: "bets" }),
-}));
+export const marketOutcomesRelations = relations(
+  marketOutcomesTable,
+  ({ one, many }) => ({
+    market: one(marketsTable, {
+      fields: [marketOutcomesTable.marketId],
+      references: [marketsTable.id],
+      relationName: "outcomes",
+    }),
+    bets: many(betsTable, { relationName: "bets" }),
+  })
+);
 
 export const betsRelations = relations(betsTable, ({ one }) => ({
   user: one(usersTable, {
