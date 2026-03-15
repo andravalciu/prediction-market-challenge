@@ -1,7 +1,16 @@
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import db from "../db";
-import { usersTable, marketsTable, marketOutcomesTable, betsTable } from "../db/schema";
-import { hashPassword, verifyPassword, type AuthTokenPayload } from "../lib/auth";
+import {
+  usersTable,
+  marketsTable,
+  marketOutcomesTable,
+  betsTable,
+} from "../db/schema";
+import {
+  hashPassword,
+  verifyPassword,
+  type AuthTokenPayload,
+} from "../lib/auth";
 import {
   validateRegistration,
   validateLogin,
@@ -31,7 +40,8 @@ export async function handleRegister({
   }
 
   const existingUser = await db.query.usersTable.findFirst({
-    where: (users, { or, eq }) => or(eq(users.email, email), eq(users.username, username)),
+    where: (users, { or, eq }) =>
+      or(eq(users.email, email), eq(users.username, username)),
   });
 
   if (existingUser) {
@@ -41,7 +51,10 @@ export async function handleRegister({
 
   const passwordHash = await hashPassword(password);
 
-  const newUser = await db.insert(usersTable).values({ username, email, passwordHash }).returning();
+  const newUser = await db
+    .insert(usersTable)
+    .values({ username, email, passwordHash })
+    .returning();
 
   const token = await jwt.sign({ userId: newUser[0].id });
 
@@ -123,7 +136,7 @@ export async function handleCreateMarket({
         marketId: market[0].id,
         title,
         position: index,
-      })),
+      }))
     )
     .returning();
 
@@ -137,7 +150,11 @@ export async function handleCreateMarket({
   };
 }
 
-export async function handleListMarkets({ query }: { query: { status?: string } }) {
+export async function handleListMarkets({
+  query,
+}: {
+  query: { status?: string };
+}) {
   const statusFilter = query.status || "active";
 
   const markets = await db.query.marketsTable.findMany({
@@ -161,12 +178,18 @@ export async function handleListMarkets({ query }: { query: { status?: string } 
             .from(betsTable)
             .where(eq(betsTable.outcomeId, outcome.id));
 
-          const totalAmount = totalBets.reduce((sum, bet) => sum + bet.amount, 0);
+          const totalAmount = totalBets.reduce(
+            (sum, bet) => sum + bet.amount,
+            0
+          );
           return { outcomeId: outcome.id, totalBets: totalAmount };
-        }),
+        })
       );
 
-      const totalMarketBets = betsPerOutcome.reduce((sum, b) => sum + b.totalBets, 0);
+      const totalMarketBets = betsPerOutcome.reduce(
+        (sum, b) => sum + b.totalBets,
+        0
+      );
 
       return {
         id: market.id,
@@ -175,9 +198,12 @@ export async function handleListMarkets({ query }: { query: { status?: string } 
         creator: market.creator?.username,
         outcomes: market.outcomes.map((outcome) => {
           const outcomeBets =
-            betsPerOutcome.find((b) => b.outcomeId === outcome.id)?.totalBets || 0;
+            betsPerOutcome.find((b) => b.outcomeId === outcome.id)?.totalBets ||
+            0;
           const odds =
-            totalMarketBets > 0 ? Number(((outcomeBets / totalMarketBets) * 100).toFixed(2)) : 0;
+            totalMarketBets > 0
+              ? Number(((outcomeBets / totalMarketBets) * 100).toFixed(2))
+              : 0;
 
           return {
             id: outcome.id,
@@ -188,7 +214,7 @@ export async function handleListMarkets({ query }: { query: { status?: string } 
         }),
         totalMarketBets,
       };
-    }),
+    })
   );
 
   return enrichedMarkets;
@@ -227,10 +253,13 @@ export async function handleGetMarket({
 
       const totalAmount = totalBets.reduce((sum, bet) => sum + bet.amount, 0);
       return { outcomeId: outcome.id, totalBets: totalAmount };
-    }),
+    })
   );
 
-  const totalMarketBets = betsPerOutcome.reduce((sum, b) => sum + b.totalBets, 0);
+  const totalMarketBets = betsPerOutcome.reduce(
+    (sum, b) => sum + b.totalBets,
+    0
+  );
 
   return {
     id: market.id,
@@ -239,9 +268,12 @@ export async function handleGetMarket({
     status: market.status,
     creator: market.creator?.username,
     outcomes: market.outcomes.map((outcome) => {
-      const outcomeBets = betsPerOutcome.find((b) => b.outcomeId === outcome.id)?.totalBets || 0;
+      const outcomeBets =
+        betsPerOutcome.find((b) => b.outcomeId === outcome.id)?.totalBets || 0;
       const odds =
-        totalMarketBets > 0 ? Number(((outcomeBets / totalMarketBets) * 100).toFixed(2)) : 0;
+        totalMarketBets > 0
+          ? Number(((outcomeBets / totalMarketBets) * 100).toFixed(2))
+          : 0;
 
       return {
         id: outcome.id,
@@ -267,7 +299,8 @@ export async function handlePlaceBet({
 }) {
   const marketId = params.id;
   const { outcomeId, amount } = body;
-  const errors = validateBet(amount);
+  const numericAmount = Number(amount);
+  const errors = validateBet(numericAmount);
 
   if (errors.length > 0) {
     set.status = 400;
@@ -289,7 +322,10 @@ export async function handlePlaceBet({
   }
 
   const outcome = await db.query.marketOutcomesTable.findFirst({
-    where: and(eq(marketOutcomesTable.id, outcomeId), eq(marketOutcomesTable.marketId, marketId)),
+    where: and(
+      eq(marketOutcomesTable.id, outcomeId),
+      eq(marketOutcomesTable.marketId, marketId)
+    ),
   });
 
   if (!outcome) {
@@ -297,15 +333,45 @@ export async function handlePlaceBet({
     return { error: "Outcome not found" };
   }
 
+  const currentUser = await db.query.usersTable.findFirst({
+    where: eq(usersTable.id, user.id),
+  });
+
+  if (!currentUser) {
+    set.status = 404;
+    return { error: "User not found" };
+  }
+
+  if (currentUser.balance < numericAmount) {
+    set.status = 400;
+    return { error: "Insufficient balance" };
+  }
+
+  await db
+    .update(usersTable)
+    .set({
+      balance: sql`${usersTable.balance} - ${numericAmount}`,
+      updatedAt: new Date(),
+    })
+    .where(eq(usersTable.id, user.id));
+
   const bet = await db
     .insert(betsTable)
     .values({
       userId: user.id,
       marketId,
       outcomeId,
-      amount: Number(amount),
+      amount: numericAmount,
     })
     .returning();
+
+  const updatedUser = await db.query.usersTable.findFirst({
+    where: eq(usersTable.id, user.id),
+    columns: {
+      id: true,
+      balance: true,
+    },
+  });
 
   set.status = 201;
   return {
@@ -314,5 +380,6 @@ export async function handlePlaceBet({
     marketId: bet[0].marketId,
     outcomeId: bet[0].outcomeId,
     amount: bet[0].amount,
+    remainingBalance: updatedUser?.balance ?? null,
   };
 }
