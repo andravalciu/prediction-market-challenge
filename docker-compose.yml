@@ -1,0 +1,29 @@
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    environment:
+      HOST: 0.0.0.0
+      PORT: 4001
+      DB_FILE_NAME: /app/data/database.sqlite
+      JWT_SECRET: 7bc15c2760b14b515bc33d4eb8dfbbf6
+      SEED_DATABASE: "true"
+    ports:
+      - "4005:4001"
+    volumes:
+      - server_data:/app/data
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    depends_on:
+      - server
+    environment:
+      VITE_API_URL: http://localhost:4005
+    ports:
+      - "3005:3000"
+
+volumes:
+  server_data:

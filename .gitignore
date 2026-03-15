@@ -1,0 +1,28 @@
+# node modules
+node_modules
+client/node_modules
+server/node_modules
+
+# env files
+.env
+client/.env
+server/.env
+
+# build outputs
+dist
+build
+out
+
+# logs
+*.log
+
+# macOS
+.DS_Store
+
+# sqlite databases
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# editor
+.vscode
