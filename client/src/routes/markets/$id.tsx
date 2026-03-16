@@ -7,17 +7,30 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 function MarketDetailPage() {
   const { id } = useParams({ from: "/markets/$id" });
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [market, setMarket] = useState<Market | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedOutcomeId, setSelectedOutcomeId] = useState<number | null>(null);
   const [betAmount, setBetAmount] = useState("");
   const [isBetting, setIsBetting] = useState(false);
+  const [isResolving, setIsResolving] = useState(false);
+  const [isResolveDialogOpen, setIsResolveDialogOpen] = useState(false);
+  const isAdmin = user?.role === "admin";
+  
 
   const marketId = parseInt(id, 10);
 
@@ -58,6 +71,27 @@ function MarketDetailPage() {
       setError(err instanceof Error ? err.message : "Failed to place bet");
     } finally {
       setIsBetting(false);
+    }
+  };
+
+  const handleResolveMarket = async () => {
+    if (!selectedOutcomeId) {
+      setError("Please select an outcome to resolve the market");
+      return;
+    }
+
+    try {
+      setIsResolving(true);
+      setError(null);
+      await api.resolveMarket(marketId, selectedOutcomeId);
+
+      const updated = await api.getMarket(marketId);
+      setMarket(updated);
+      setIsResolveDialogOpen(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to resolve market");
+    } finally {
+      setIsResolving(false);
     }
   };
 
@@ -161,6 +195,83 @@ function MarketDetailPage() {
               </p>
             </div>
 
+
+            {/* Admin Controls */}
+            {market.status === "active" && isAdmin && (
+              <Card className="border-amber-300 bg-amber-50">
+                <CardHeader className="space-y-3">
+                 <div className="flex items-center justify-between">
+                   <CardTitle>Admin Controls</CardTitle>
+                   <Badge className="bg-amber-100 text-amber-800 border border-amber-200 pointer-events-none">
+                     Admin
+                   </Badge>
+                  </div>
+                  <CardDescription>
+                   Select the winning outcome and resolve this market.
+                  </CardDescription>
+                </CardHeader> 
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Selected Winning Outcome</Label>
+                    <div className="p-3 bg-white border rounded-md">
+                      {market.outcomes.find((o) => o.id === selectedOutcomeId)?.title ||
+                        "None selected"}
+                    </div>
+                  </div>
+
+                  <Dialog open={isResolveDialogOpen} onOpenChange={setIsResolveDialogOpen}>
+  <DialogTrigger asChild>
+    <Button
+      className="w-full text-lg py-6 font-medium bg-slate-900 hover:bg-slate-800 text-white transition-colors duration-200"
+      disabled={isResolving || !selectedOutcomeId}
+    >
+      Resolve Market
+    </Button>
+  </DialogTrigger>
+
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Resolve market</DialogTitle>
+      <DialogDescription>
+      This will close the market and distribute payouts to bettors who chose the winning outcome.
+      </DialogDescription>
+    </DialogHeader>
+
+    <div className="rounded-md border border-slate-200 bg-slate-50 p-4 flex items-center justify-between">
+  <div>
+    <p className="text-sm text-muted-foreground">Winning outcome</p>
+    <p className="font-semibold">
+      {market.outcomes.find((o) => o.id === selectedOutcomeId)?.title || "None selected"}
+    </p>
+  </div>
+
+   <Badge variant="outline" className="text-muted-foreground border-muted">
+    Winner
+   </Badge>
+</div>
+
+    <DialogFooter className="flex justify-between items-center pt-4">
+      <Button
+        variant="ghost"
+        onClick={() => setIsResolveDialogOpen(false)}
+        disabled={isResolving}
+      >
+        Cancel
+      </Button>
+      <Button
+        className="bg-slate-900 hover:bg-slate-800 text-white transition-all duration-200 hover:shadow-md"
+        onClick={handleResolveMarket}
+        disabled={isResolving || !selectedOutcomeId}
+      >
+        {isResolving ? "Resolving..." : "Confirm Resolution"}
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Betting Section */}
             {market.status === "active" && (
               <Card className="bg-secondary/5">
@@ -202,9 +313,20 @@ function MarketDetailPage() {
             )}
 
             {market.status === "resolved" && (
-              <Card>
-                <CardContent className="py-6">
-                  <p className="text-muted-foreground">This market has been resolved.</p>
+              <Card className="border border-emerald-200 bg-emerald-50/60 shadow-sm">
+                <CardContent className="py-6 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="font-semibold text-emerald-800">Market resolved</p>
+                    <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-200 hover:bg-emerald-100">
+                      Closed
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-emerald-700">
+                    Winning outcome:{" "}
+                    <span className="font-medium">
+                      {market.outcomes.find((o) => o.id === selectedOutcomeId)?.title || "Resolved"}
+                    </span>
+                  </p>
                 </CardContent>
               </Card>
             )}

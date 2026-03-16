@@ -63,6 +63,7 @@ export async function handleRegister({
     id: newUser[0].id,
     username: newUser[0].username,
     email: newUser[0].email,
+    role: newUser[0].role,
     token,
   };
 }
@@ -99,6 +100,7 @@ export async function handleLogin({
     id: user.id,
     username: user.username,
     email: user.email,
+    role: user.role,
     token,
   };
 }
@@ -381,5 +383,104 @@ export async function handlePlaceBet({
     outcomeId: bet[0].outcomeId,
     amount: bet[0].amount,
     remainingBalance: updatedUser?.balance ?? null,
+  };
+}
+
+export async function handleResolveMarket({
+  params,
+  body,
+  set,
+  user,
+}: {
+  params: { id: number };
+  body: { outcomeId: number };
+  set: { status: number };
+  user: typeof usersTable.$inferSelect;
+}) {
+  const marketId = params.id;
+  const { outcomeId } = body;
+
+  if (!user) {
+    set.status = 401;
+    return { error: "Unauthorized" };
+  }
+
+  if (user.role !== "admin") {
+    set.status = 403;
+    return { error: "Admin access required" };
+  }
+
+  const market = await db.query.marketsTable.findFirst({
+    where: eq(marketsTable.id, marketId),
+    with: {
+      outcomes: true,
+    },
+  });
+
+  if (!market) {
+    set.status = 404;
+    return { error: "Market not found" };
+  }
+
+  if (market.status !== "active") {
+    set.status = 400;
+    return { error: "Market is not active" };
+  }
+
+  const winningOutcome = market.outcomes.find(
+    (outcome) => outcome.id === outcomeId
+  );
+
+  if (!winningOutcome) {
+    set.status = 400;
+    return { error: "Selected outcome does not belong to this market" };
+  }
+
+  const allBets = await db
+    .select()
+    .from(betsTable)
+    .where(eq(betsTable.marketId, marketId));
+
+  const totalPool = allBets.reduce((sum, bet) => sum + bet.amount, 0);
+  const winningBets = allBets.filter((bet) => bet.outcomeId === outcomeId);
+  const totalWinningStake = winningBets.reduce(
+    (sum, bet) => sum + bet.amount,
+    0
+  );
+
+  if (winningBets.length > 0 && totalWinningStake > 0) {
+    for (const bet of winningBets) {
+      const payout = Number(
+        ((totalPool * bet.amount) / totalWinningStake).toFixed(2)
+      );
+
+      await db
+        .update(usersTable)
+        .set({
+          balance: sql`${usersTable.balance} + ${payout}`,
+          totalWinnings: sql`${usersTable.totalWinnings} + ${payout}`,
+          updatedAt: new Date(),
+        })
+        .where(eq(usersTable.id, bet.userId));
+    }
+  }
+
+  await db
+    .update(marketsTable)
+    .set({
+      status: "resolved",
+      resolvedOutcomeId: outcomeId,
+      resolvedAt: new Date(),
+    })
+    .where(eq(marketsTable.id, marketId));
+
+  set.status = 200;
+  return {
+    success: true,
+    marketId,
+    resolvedOutcomeId: outcomeId,
+    totalPool,
+    winnersCount: winningBets.length,
+    totalWinningStake,
   };
 }
