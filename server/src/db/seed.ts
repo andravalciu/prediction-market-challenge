@@ -5,9 +5,12 @@ import { drizzle } from "drizzle-orm/bun-sqlite";
 import * as schema from "./schema";
 import { hashPassword } from "../lib/auth";
 
-const db = drizzle(new Database(process.env.DB_FILE_NAME || "database.sqlite"), {
-  schema,
-});
+const db = drizzle(
+  new Database(process.env.DB_FILE_NAME || "database.sqlite"),
+  {
+    schema,
+  }
+);
 
 const USER_COUNT = 5_000;
 const MARKET_COUNT = 3_000;
@@ -23,7 +26,12 @@ const MARKET_CATEGORIES = [
   "weather",
 ] as const;
 const YES_NO_OUTCOMES = ["Yes", "No"];
-const MARKET_STATUS_OPTIONS = ["active", "active", "active", "resolved"] as const;
+const MARKET_STATUS_OPTIONS = [
+  "active",
+  "active",
+  "active",
+  "resolved",
+] as const;
 
 type MarketStatus = (typeof MARKET_STATUS_OPTIONS)[number];
 
@@ -71,38 +79,85 @@ function createRandomUser(runId: string, index: number): UserInsert {
   const sex = faker.person.sexType();
   const firstName = faker.person.firstName(sex);
   const lastName = faker.person.lastName();
-  const usernameBase = `${firstName}.${lastName}`.toLowerCase().replace(/[^a-z0-9]+/g, ".");
+  const usernameBase = `${firstName}.${lastName}`
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ".");
   const username = `${usernameBase}.${runId}.${index}`;
   const email = faker.internet.email({
     firstName,
     lastName,
     provider: "seed.local",
   });
-  const normalizedEmail = `${email.split("@")[0]}.${runId}.${index}@seed.local`.toLowerCase();
+  const normalizedEmail = `${
+    email.split("@")[0]
+  }.${runId}.${index}@seed.local`.toLowerCase();
 
   return {
     username,
     email: normalizedEmail,
     passwordHash: "",
+    role: "user",
+    balance: 1000,
+    totalWinnings: 0,
   };
 }
 
 function createMarketTitle(category: (typeof MARKET_CATEGORIES)[number]) {
   switch (category) {
     case "crypto":
-      return `Will ${faker.finance.currencyCode()} trade above ${faker.number.int({ min: 20, max: 250 })} by ${faker.date
+      return `Will ${faker.finance.currencyCode()} trade above ${faker.number.int(
+        { min: 20, max: 250 }
+      )} by ${faker.date
         .soon({ days: 180 })
-        .toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}?`;
+        .toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })}?`;
     case "sports":
-      return `Will the ${faker.helpers.arrayElement(["Lions", "Storm", "Falcons", "Tigers", "Sharks"])} win ${faker.helpers.arrayElement(["their next match", "the division", "the championship"])}?`;
+      return `Will the ${faker.helpers.arrayElement([
+        "Lions",
+        "Storm",
+        "Falcons",
+        "Tigers",
+        "Sharks",
+      ])} win ${faker.helpers.arrayElement([
+        "their next match",
+        "the division",
+        "the championship",
+      ])}?`;
     case "politics":
-      return `Will ${faker.location.city()} approve ${faker.helpers.arrayElement(["the housing measure", "the transit bond", "the tax proposal", "the school budget"])} this year?`;
+      return `Will ${faker.location.city()} approve ${faker.helpers.arrayElement(
+        [
+          "the housing measure",
+          "the transit bond",
+          "the tax proposal",
+          "the school budget",
+        ]
+      )} this year?`;
     case "business":
-      return `Will ${faker.company.name()} launch ${faker.helpers.arrayElement(["an IPO", "a new AI product", "a mobile app", "a subscription tier"])} before Q${faker.number.int({ min: 2, max: 4 })}?`;
+      return `Will ${faker.company.name()} launch ${faker.helpers.arrayElement([
+        "an IPO",
+        "a new AI product",
+        "a mobile app",
+        "a subscription tier",
+      ])} before Q${faker.number.int({ min: 2, max: 4 })}?`;
     case "science":
-      return `Will ${faker.helpers.arrayElement(["fusion", "gene therapy", "battery tech", "space robotics"])} hit ${faker.helpers.arrayElement(["a public milestone", "commercial rollout", "regulatory approval", "a new record"])} this year?`;
+      return `Will ${faker.helpers.arrayElement([
+        "fusion",
+        "gene therapy",
+        "battery tech",
+        "space robotics",
+      ])} hit ${faker.helpers.arrayElement([
+        "a public milestone",
+        "commercial rollout",
+        "regulatory approval",
+        "a new record",
+      ])} this year?`;
     case "weather":
-      return `Will ${faker.location.city()} record ${faker.helpers.arrayElement(["rain", "snow", "temperatures above 35C", "temperatures below -5C"])} this month?`;
+      return `Will ${faker.location.city()} record ${faker.helpers.arrayElement(
+        ["rain", "snow", "temperatures above 35C", "temperatures below -5C"]
+      )} this month?`;
   }
 }
 
@@ -147,7 +202,10 @@ function createMarketOutcomes(category: (typeof MARKET_CATEGORIES)[number]) {
     ]);
   }
 
-  return faker.helpers.arrayElement([YES_NO_OUTCOMES, ["Yes", "No", "Unclear"]]);
+  return faker.helpers.arrayElement([
+    YES_NO_OUTCOMES,
+    ["Yes", "No", "Unclear"],
+  ]);
 }
 
 function createRandomMarket(): GeneratedMarket {
@@ -188,17 +246,44 @@ async function insertUsers() {
   const insertedUsers: UserRow[] = [];
 
   for (const batch of chunkArray(userValues, USER_INSERT_BATCH_SIZE)) {
-    const created = await db.insert(schema.usersTable).values(batch).returning();
+    const created = await db
+      .insert(schema.usersTable)
+      .values(batch)
+      .returning();
     insertedUsers.push(...created);
   }
 
-  const seededUsers: SeededUser[] = insertedUsers.map((user) => ({
-    id: user.id,
-    username: user.username,
-    email: user.email,
-    password: SHARED_PASSWORD,
-    remainingBalance: faker.number.int({ min: 500, max: 10_000 }),
-  }));
+  const adminPassword = "admin123";
+  const adminPasswordHash = await hashPassword(adminPassword);
+
+  const [adminUser] = await db
+    .insert(schema.usersTable)
+    .values({
+      username: "admin",
+      email: "admin@seed.local",
+      passwordHash: adminPasswordHash,
+      role: "admin",
+      balance: 1000,
+      totalWinnings: 0,
+    })
+    .returning();
+
+  const seededUsers: SeededUser[] = [
+    {
+      id: adminUser.id,
+      username: adminUser.username,
+      email: adminUser.email,
+      password: adminPassword,
+      remainingBalance: 1000,
+    },
+    ...insertedUsers.map((user) => ({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      password: SHARED_PASSWORD,
+      remainingBalance: faker.number.int({ min: 500, max: 10_000 }),
+    })),
+  ];
 
   console.log(`Created ${seededUsers.length} users.`);
 
@@ -221,12 +306,17 @@ async function insertMarkets(users: SeededUser[]) {
       createdBy: creator.id,
     };
 
-    const [createdMarket] = await db.insert(schema.marketsTable).values(marketInsert).returning();
-    const outcomeValues: MarketOutcomeInsert[] = marketData.outcomes.map((title, position) => ({
-      marketId: createdMarket.id,
-      title,
-      position,
-    }));
+    const [createdMarket] = await db
+      .insert(schema.marketsTable)
+      .values(marketInsert)
+      .returning();
+    const outcomeValues: MarketOutcomeInsert[] = marketData.outcomes.map(
+      (title, position) => ({
+        marketId: createdMarket.id,
+        title,
+        position,
+      })
+    );
     const createdOutcomes = await db
       .insert(schema.marketOutcomesTable)
       .values(outcomeValues)
@@ -257,7 +347,9 @@ async function insertMarkets(users: SeededUser[]) {
     }
   }
 
-  console.log(`Created ${createdMarkets.length} markets and ${createdOutcomeCount} outcomes.`);
+  console.log(
+    `Created ${createdMarkets.length} markets and ${createdOutcomeCount} outcomes.`
+  );
 
   return {
     createdMarkets,
@@ -289,7 +381,7 @@ async function insertBets(users: SeededUser[], markets: CreatedMarket[]) {
     const participantCount = faker.number.int({ min: 8, max: 40 });
     const participants = faker.helpers.arrayElements(
       users.filter((user) => user.remainingBalance >= 5),
-      participantCount,
+      participantCount
     );
 
     for (const user of participants) {
@@ -338,7 +430,7 @@ function printSeedSummary(
   users: SeededUser[],
   marketCount: number,
   outcomeCount: number,
-  betCount: number,
+  betCount: number
 ) {
   console.log("\n============================================================");
   console.log("SEEDING COMPLETE");

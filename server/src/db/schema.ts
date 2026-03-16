@@ -1,3 +1,14 @@
+/**
+ * Database schema for the Prediction Market application.
+ *
+ * Core entities:
+ * - Users: participants with balances who place bets
+ * - Markets: prediction events created by users
+ * - MarketOutcomes: possible outcomes for each market
+ * - Bets: user wagers placed on specific outcomes
+ *
+ * Admin users can resolve markets and distribute payouts.
+ */
 import {
   int,
   sqliteTable,
@@ -43,7 +54,7 @@ export const marketsTable = sqliteTable(
     id: integer("id").primaryKey({ autoIncrement: true }),
     title: text("title").notNull(),
     description: text("description"),
-    status: text("status", { enum: ["active", "resolved"] })
+    status: text("status", { enum: ["active", "resolved", "archived"] })
       .notNull()
       .default("active"),
     createdBy: integer("created_by")
@@ -53,6 +64,7 @@ export const marketsTable = sqliteTable(
       .notNull()
       .$defaultFn(() => new Date()),
     resolvedOutcomeId: integer("resolved_outcome_id"),
+    resolvedAt: integer("resolved_at", { mode: "timestamp" }),
   },
   (table) => ({
     createdByIdx: index("markets_created_by_idx").on(table.createdBy),
