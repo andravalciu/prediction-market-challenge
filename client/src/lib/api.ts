@@ -37,6 +37,13 @@ export interface Bet {
   createdAt: string;
 }
 
+export interface LeaderboardEntry {
+  rank: number;
+  id: number;
+  username: string;
+  totalWinnings: number;
+}
+
 // API Client
 class ApiClient {
   private baseUrl: string;
@@ -143,6 +150,10 @@ class ApiClient {
     });
 
     return response;
+  }
+
+  async getLeaderboard(): Promise<LeaderboardEntry[]> {
+    return this.request("/api/markets/leaderboard");
   }
 }
 

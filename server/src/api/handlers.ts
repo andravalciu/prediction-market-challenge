@@ -493,3 +493,22 @@ export async function handleResolveMarket({
     totalWinningStake,
   };
 }
+
+export async function handleGetLeaderboard() {
+  const users = await db.query.usersTable.findMany({
+    columns: {
+      id: true,
+      username: true,
+      totalWinnings: true,
+    },
+    orderBy: (users, { desc }) => desc(users.totalWinnings),
+    limit: 20,
+  });
+
+  return users.map((user, index) => ({
+    rank: index + 1,
+    id: user.id,
+    username: user.username,
+    totalWinnings: Number(user.totalWinnings ?? 0),
+  }));
+}

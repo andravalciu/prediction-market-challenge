@@ -59,6 +59,9 @@ function DashboardPage() {
             <p className="text-gray-600 mt-2">Welcome back, {user?.username}!</p>
           </div>
           <div className="flex items-center gap-4">
+            <Button variant="outline" onClick={() => navigate({ to: "/leaderboard" })}>
+              Leaderboard
+            </Button>
             <Button variant="outline" onClick={() => navigate({ to: "/auth/logout" })}>
               Logout
             </Button>
