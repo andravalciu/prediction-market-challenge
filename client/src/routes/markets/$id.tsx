@@ -161,30 +161,47 @@ function MarketDetailPage() {
             {/* Outcomes Display */}
             <div className="space-y-3">
               <h3 className="text-lg font-semibold">Outcomes</h3>
-              {market.outcomes.map((outcome) => (
-                <div
-                  key={outcome.id}
-                  className={`p-4 rounded-lg border-2 cursor-pointer transition-colors ${
-                    selectedOutcomeId === outcome.id
-                      ? "border-primary bg-primary/5"
-                      : "border-secondary bg-secondary/5 hover:border-primary/50"
-                  }`}
-                  onClick={() => market.status === "active" && setSelectedOutcomeId(outcome.id)}
-                >
-                  <div className="flex justify-between items-center">
-                    <div className="flex-1">
-                      <h4 className="font-semibold">{outcome.title}</h4>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Total bets: ${outcome.totalBets.toFixed(2)}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-3xl font-bold text-primary">{outcome.odds}%</p>
-                      <p className="text-xs text-muted-foreground">odds</p>
+
+              {market.outcomes.map((outcome) => {
+                const isSelected =
+                  market.status === "active"
+                    ? selectedOutcomeId === outcome.id
+                    : market.resolvedOutcomeId === outcome.id;
+
+                    const isWinner =
+                     market.status === "resolved" && market.resolvedOutcomeId === outcome.id;
+
+                  return (
+                  <div
+                    key={outcome.id}
+                    className={`p-4 rounded-lg border-2 transition-colors ${
+                      isSelected
+                        ? "border-primary bg-primary/5"
+                        : "border-secondary bg-secondary/5"
+                    } ${market.status === "active" ? "cursor-pointer hover:border-primary/50" : "cursor-default"}`}
+                    onClick={() =>
+                      market.status === "active" && setSelectedOutcomeId(outcome.id)
+                    }
+                  >
+                    <div className="flex justify-between items-center">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-semibold">{outcome.title}</h4>
+                        </div>
+
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Total bets: ${outcome.totalBets.toFixed(2)}
+                        </p>
+                      </div>
+
+                      <div className="text-right">
+                        <p className="text-3xl font-bold text-primary">{outcome.odds}%</p>
+                        <p className="text-xs text-muted-foreground">odds</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Market Stats */}
@@ -312,24 +329,28 @@ function MarketDetailPage() {
               </Card>
             )}
 
-            {market.status === "resolved" && (
-              <Card className="border border-emerald-200 bg-emerald-50/60 shadow-sm">
-                <CardContent className="py-6 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="font-semibold text-emerald-800">Market resolved</p>
-                    <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-200 hover:bg-emerald-100">
-                      Closed
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-emerald-700">
-                    Winning outcome:{" "}
-                    <span className="font-medium">
-                      {market.outcomes.find((o) => o.id === selectedOutcomeId)?.title || "Resolved"}
-                    </span>
-                  </p>
-                </CardContent>
-              </Card>
-            )}
+{market.status === "resolved" && (
+  <Card className="rounded-xl border border-emerald-200 bg-emerald-50/60">
+    <CardHeader>
+      <div className="flex items-center justify-between">
+        <CardTitle className="text-emerald-800">Market resolved</CardTitle>
+
+        <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-200 pointer-events-none">
+          Closed
+        </Badge>
+      </div>
+    </CardHeader>
+
+    <CardContent>
+      <p className="text-sm text-emerald-700">
+        Winning outcome:{" "}
+        <span className="font-semibold">
+          {market.resolvedOutcomeTitle || "Resolved"}
+        </span>
+      </p>
+    </CardContent>
+  </Card>
+)}
           </CardContent>
         </Card>
       </div>

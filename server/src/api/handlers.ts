@@ -263,12 +263,21 @@ export async function handleGetMarket({
     0
   );
 
+  const resolvedOutcome =
+    market.resolvedOutcomeId != null
+      ? market.outcomes.find(
+          (outcome) => outcome.id === market.resolvedOutcomeId
+        ) ?? null
+      : null;
+
   return {
     id: market.id,
     title: market.title,
     description: market.description,
     status: market.status,
     creator: market.creator?.username,
+    resolvedOutcomeId: market.resolvedOutcomeId,
+    resolvedOutcomeTitle: resolvedOutcome?.title ?? null,
     outcomes: market.outcomes.map((outcome) => {
       const outcomeBets =
         betsPerOutcome.find((b) => b.outcomeId === outcome.id)?.totalBets || 0;

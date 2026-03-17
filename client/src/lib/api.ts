@@ -9,6 +9,8 @@ export interface Market {
   creator?: string;
   outcomes: MarketOutcome[];
   totalMarketBets: number;
+  resolvedOutcomeId?: number | null;
+  resolvedOutcomeTitle?: string | null;
 }
 
 export interface MarketOutcome {
