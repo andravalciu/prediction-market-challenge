@@ -155,6 +155,19 @@ class ApiClient {
   async getLeaderboard(): Promise<LeaderboardEntry[]> {
     return this.request("/api/markets/leaderboard");
   }
+
+  // Profile endpoints
+  async getProfile() {
+    return this.request("/api/markets/profile");
+  }
+
+  async getActiveBets(page = 1) {
+    return this.request(`/api/markets/profile/bets/active?page=${page}`);
+  }
+
+  async getResolvedBets(page = 1) {
+    return this.request(`/api/markets/profile/bets/resolved?page=${page}`);
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);

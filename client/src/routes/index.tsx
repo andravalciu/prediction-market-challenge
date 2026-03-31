@@ -59,13 +59,21 @@ function DashboardPage() {
             <p className="text-gray-600 mt-2">Welcome back, {user?.username}!</p>
           </div>
           <div className="flex items-center gap-4">
+            {/* Navigation */}
             <Button variant="outline" onClick={() => navigate({ to: "/leaderboard" })}>
               Leaderboard
+            </Button>
+            <Button variant="outline" onClick={() => navigate({ to: "/profile" })}>
+              Profile
+            </Button>
+
+            {/* Actions */}
+            <Button onClick={() => navigate({ to: "/markets/new" })}>
+              Create Market
             </Button>
             <Button variant="outline" onClick={() => navigate({ to: "/auth/logout" })}>
               Logout
             </Button>
-            <Button onClick={() => navigate({ to: "/markets/new" })}>Create Market</Button>
           </div>
         </div>
 

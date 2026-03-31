@@ -7,6 +7,9 @@ import {
   handlePlaceBet,
   handleResolveMarket,
   handleGetLeaderboard,
+  handleGetProfile,
+  handleGetActiveBets,
+  handleGetResolvedBets,
 } from "./handlers";
 
 export const marketRoutes = new Elysia({ prefix: "/api/markets" })
@@ -17,16 +20,6 @@ export const marketRoutes = new Elysia({ prefix: "/api/markets" })
     }),
   })
   .get("/leaderboard", handleGetLeaderboard)
-  .get("/:id", handleGetMarket, {
-    params: t.Object({
-      id: t.Numeric(),
-    }),
-  })
-  .get("/:id", handleGetMarket, {
-    params: t.Object({
-      id: t.Numeric(),
-    }),
-  })
   .guard(
     {
       beforeHandle({ user, set }) {
@@ -38,6 +31,17 @@ export const marketRoutes = new Elysia({ prefix: "/api/markets" })
     },
     (app) =>
       app
+        .get("/profile", handleGetProfile)
+        .get("/profile/bets/active", handleGetActiveBets, {
+          query: t.Object({
+            page: t.Optional(t.Numeric()),
+          }),
+        })
+        .get("/profile/bets/resolved", handleGetResolvedBets, {
+          query: t.Object({
+            page: t.Optional(t.Numeric()),
+          }),
+        })
         .post("/", handleCreateMarket, {
           body: t.Object({
             title: t.String(),
@@ -62,4 +66,9 @@ export const marketRoutes = new Elysia({ prefix: "/api/markets" })
             outcomeId: t.Number(),
           }),
         })
-  );
+  )
+  .get("/:id", handleGetMarket, {
+    params: t.Object({
+      id: t.Numeric(),
+    }),
+  });

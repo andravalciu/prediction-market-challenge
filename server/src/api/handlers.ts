@@ -512,3 +512,178 @@ export async function handleGetLeaderboard() {
     totalWinnings: Number(user.totalWinnings ?? 0),
   }));
 }
+
+export async function handleGetProfile({
+  set,
+  user,
+}: {
+  set: { status: number };
+  user: typeof usersTable.$inferSelect;
+}) {
+  if (!user) {
+    set.status = 401;
+    return { error: "Unauthorized" };
+  }
+
+  const currentUser = await db.query.usersTable.findFirst({
+    where: eq(usersTable.id, user.id),
+    columns: {
+      id: true,
+      username: true,
+      email: true,
+      role: true,
+      balance: true,
+      totalWinnings: true,
+    },
+  });
+
+  if (!currentUser) {
+    set.status = 404;
+    return { error: "User not found" };
+  }
+
+  return currentUser;
+}
+
+export async function handleGetActiveBets({
+  query,
+  set,
+  user,
+}: {
+  query: { page?: number };
+  set: { status: number };
+  user: typeof usersTable.$inferSelect;
+}) {
+  if (!user) {
+    set.status = 401;
+    return { error: "Unauthorized" };
+  }
+
+  const page = Number(query.page ?? 1);
+  const limit = 20;
+
+  const allBets = await db.query.betsTable.findMany({
+    where: eq(betsTable.userId, user.id),
+    with: {
+      market: true,
+      outcome: true,
+    },
+    orderBy: (bets, { desc }) => desc(bets.createdAt),
+  });
+
+  const activeBets = allBets.filter((bet) => bet.market?.status === "active");
+
+  const totalItems = activeBets.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / limit));
+  const start = (page - 1) * limit;
+  const paginated = activeBets.slice(start, start + limit);
+
+  const items = await Promise.all(
+    paginated.map(async (bet) => {
+      const marketBets = await db
+        .select()
+        .from(betsTable)
+        .where(eq(betsTable.marketId, bet.marketId));
+
+      const totalMarketBets = marketBets.reduce(
+        (sum, currentBet) => sum + currentBet.amount,
+        0
+      );
+
+      const outcomeBets = marketBets.filter(
+        (currentBet) => currentBet.outcomeId === bet.outcomeId
+      );
+      const outcomeTotal = outcomeBets.reduce(
+        (sum, currentBet) => sum + currentBet.amount,
+        0
+      );
+
+      const currentOdds =
+        totalMarketBets > 0
+          ? Number(((outcomeTotal / totalMarketBets) * 100).toFixed(2))
+          : 0;
+
+      return {
+        id: bet.id,
+        marketId: bet.marketId,
+        marketTitle: bet.market?.title ?? "Unknown market",
+        outcomeId: bet.outcomeId,
+        outcomeTitle: bet.outcome?.title ?? "Unknown outcome",
+        amount: bet.amount,
+        createdAt: bet.createdAt,
+        currentOdds,
+      };
+    })
+  );
+
+  return {
+    items,
+    pagination: {
+      page,
+      limit,
+      totalItems,
+      totalPages,
+    },
+  };
+}
+
+export async function handleGetResolvedBets({
+  query,
+  set,
+  user,
+}: {
+  query: { page?: number };
+  set: { status: number };
+  user: typeof usersTable.$inferSelect;
+}) {
+  if (!user) {
+    set.status = 401;
+    return { error: "Unauthorized" };
+  }
+
+  const page = Number(query.page ?? 1);
+  const limit = 20;
+
+  const allBets = await db.query.betsTable.findMany({
+    where: eq(betsTable.userId, user.id),
+    with: {
+      market: true,
+      outcome: true,
+    },
+    orderBy: (bets, { desc }) => desc(bets.createdAt),
+  });
+
+  const resolvedBets = allBets.filter(
+    (bet) => bet.market?.status === "resolved"
+  );
+
+  const totalItems = resolvedBets.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / limit));
+  const start = (page - 1) * limit;
+  const paginated = resolvedBets.slice(start, start + limit);
+
+  const items = paginated.map((bet) => {
+    const didWin = bet.market?.resolvedOutcomeId === bet.outcomeId;
+
+    return {
+      id: bet.id,
+      marketId: bet.marketId,
+      marketTitle: bet.market?.title ?? "Unknown market",
+      outcomeId: bet.outcomeId,
+      outcomeTitle: bet.outcome?.title ?? "Unknown outcome",
+      amount: bet.amount,
+      createdAt: bet.createdAt,
+      result: didWin ? "won" : "lost",
+    };
+  });
+
+  return {
+    items,
+    pagination: {
+      page,
+      limit,
+      totalItems,
+      totalPages,
+    },
+  };
+}
