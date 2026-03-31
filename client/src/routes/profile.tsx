@@ -19,19 +19,29 @@ function ProfilePage() {
   const [activePagination, setActivePagination] = useState<any>(null);
   const [resolvedPagination, setResolvedPagination] = useState<any>(null);
 
+  const loadProfileSummary = async () => {
+    const data = await api.getProfile();
+    setProfile(data);
+  };
+  
+  const loadActiveBets = async (page = activePage) => {
+    const activeData = await api.getActiveBets(page);
+    setActiveBets(activeData.items);
+    setActivePagination(activeData.pagination);
+  };
+  
+  const loadResolvedBets = async (page = resolvedPage) => {
+    const resolvedData = await api.getResolvedBets(page);
+    setResolvedBets(resolvedData.items);
+    setResolvedPagination(resolvedData.pagination);
+  };
+
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const data = await api.getProfile();
-        setProfile(data);
-  
-        const activeData = await api.getActiveBets(activePage);
-        setActiveBets(activeData.items);
-        setActivePagination(activeData.pagination);
-  
-        const resolvedData = await api.getResolvedBets(resolvedPage);
-        setResolvedBets(resolvedData.items);
-        setResolvedPagination(resolvedData.pagination);
+        await loadProfileSummary();
+        await loadActiveBets(activePage);
+        await loadResolvedBets(resolvedPage);
       } catch (err) {
         console.error(err);
       } finally {
@@ -41,6 +51,21 @@ function ProfilePage() {
   
     loadProfile();
   }, [activePage, resolvedPage]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+  
+    const intervalId = setInterval(async () => {
+      try {
+        await loadProfileSummary();
+        await loadActiveBets(activePage);
+      } catch (err) {
+        console.error("Polling failed:", err);
+      }
+    }, 5000);
+  
+    return () => clearInterval(intervalId);
+  }, [isAuthenticated, activePage]);
 
   if (!isAuthenticated) {
     return (
