@@ -111,9 +111,13 @@ class ApiClient {
 
   // Markets endpoints
   async listMarkets(
-    status: "active" | "resolved" = "active"
-  ): Promise<Market[]> {
-    return this.request(`/api/markets?status=${status}`);
+    status: "active" | "resolved" = "active",
+    page = 1,
+    sortBy = "createdAt"
+  ) {
+    return this.request(
+      `/api/markets?status=${status}&page=${page}&limit=20&sortBy=${sortBy}`
+    );
   }
 
   async getMarket(id: number): Promise<Market> {

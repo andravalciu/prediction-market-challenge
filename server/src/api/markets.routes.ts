@@ -17,6 +17,9 @@ export const marketRoutes = new Elysia({ prefix: "/api/markets" })
   .get("/", handleListMarkets, {
     query: t.Object({
       status: t.Optional(t.String()),
+      page: t.Optional(t.Numeric()),
+      limit: t.Optional(t.Numeric()),
+      sortBy: t.Optional(t.String()),
     }),
   })
   .get("/leaderboard", handleGetLeaderboard)

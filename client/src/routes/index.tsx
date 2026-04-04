@@ -14,13 +14,17 @@ function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<"active" | "resolved">("active");
+  const [page, setPage] = useState(1);
+  const [sortBy, setSortBy] = useState<"createdAt" | "totalBetSize" | "participants">("createdAt");
+  const [pagination, setPagination] = useState<any>(null);
 
   const loadMarkets = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const data = await api.listMarkets(status);
-      setMarkets(data);
+      const data = await api.listMarkets(status, page, sortBy);
+      setMarkets(data.items);
+      setPagination(data.pagination);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load markets");
     } finally {
@@ -28,9 +32,34 @@ function DashboardPage() {
     }
   };
 
+  const refreshMarkets = async () => {
+    try {
+      const data = await api.listMarkets(status, page, sortBy);
+      setMarkets(data.items);
+      setPagination(data.pagination);
+    } catch (err) {
+      console.error("Polling failed:", err);
+    }
+  };
+
+  //da refresh la 5 secunde
+  useEffect(() => {
+    if (!isAuthenticated) return;
+  
+    const intervalId = setInterval(() => {
+      refreshMarkets();
+    }, 5000);
+  
+    return () => clearInterval(intervalId);
+  }, [isAuthenticated, status, page, sortBy]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [status, sortBy]);
+
   useEffect(() => {
     loadMarkets();
-  }, [status]);
+  }, [status, page, sortBy]);
 
   if (!isAuthenticated) {
     return (
@@ -78,7 +107,7 @@ function DashboardPage() {
         </div>
 
         {/* Filters */}
-        <div className="mb-6 flex gap-4">
+        <div className="mb-6 flex flex-wrap gap-4 items-center">
           <Button
             variant={status === "active" ? "default" : "outline"}
             onClick={() => setStatus("active")}
@@ -90,6 +119,24 @@ function DashboardPage() {
             onClick={() => setStatus("resolved")}
           >
             Resolved Markets
+          </Button>
+          <Button
+            variant={sortBy === "createdAt" ? "default" : "outline"}
+            onClick={() => setSortBy("createdAt")}
+          >
+            Newest
+          </Button>
+          <Button
+            variant={sortBy === "totalBetSize" ? "default" : "outline"}
+            onClick={() => setSortBy("totalBetSize")}
+          >
+            Highest Pool
+          </Button>
+          <Button
+            variant={sortBy === "participants" ? "default" : "outline"}
+            onClick={() => setSortBy("participants")}
+          >
+            Most Participants
           </Button>
           <Button variant="outline" onClick={loadMarkets} disabled={isLoading}>
             {isLoading ? "Refreshing..." : "Refresh"}
@@ -127,6 +174,31 @@ function DashboardPage() {
             ))}
           </div>
         )}
+        {pagination && pagination.totalPages > 1 && (
+  <div className="flex items-center justify-between mt-8">
+    <Button
+      variant="outline"
+      onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+      disabled={page === 1}
+    >
+      Previous
+    </Button>
+
+    <p className="text-sm text-muted-foreground">
+      Page {pagination.page} of {pagination.totalPages}
+    </p>
+
+    <Button
+      variant="outline"
+      onClick={() =>
+        setPage((prev) => Math.min(prev + 1, pagination.totalPages))
+      }
+      disabled={page === pagination.totalPages}
+    >
+      Next
+    </Button>
+  </div>
+)}
       </div>
     </div>
   );

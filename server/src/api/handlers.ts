@@ -155,9 +155,12 @@ export async function handleCreateMarket({
 export async function handleListMarkets({
   query,
 }: {
-  query: { status?: string };
+  query: { status?: string; page?: number; limit?: number; sortBy?: string };
 }) {
   const statusFilter = query.status || "active";
+  const page = Number(query.page ?? 1);
+  const limit = Number(query.limit ?? 20);
+  const sortBy = query.sortBy || "createdAt";
 
   const markets = await db.query.marketsTable.findMany({
     where: eq(marketsTable.status, statusFilter),
@@ -193,15 +196,26 @@ export async function handleListMarkets({
         0
       );
 
+      const marketBets = await db
+        .select()
+        .from(betsTable)
+        .where(eq(betsTable.marketId, market.id));
+
+      const participantCount = new Set(marketBets.map((bet) => bet.userId))
+        .size;
+
       return {
         id: market.id,
         title: market.title,
         status: market.status,
         creator: market.creator?.username,
+        createdAt: market.createdAt,
+        participantCount,
         outcomes: market.outcomes.map((outcome) => {
           const outcomeBets =
             betsPerOutcome.find((b) => b.outcomeId === outcome.id)?.totalBets ||
             0;
+
           const odds =
             totalMarketBets > 0
               ? Number(((outcomeBets / totalMarketBets) * 100).toFixed(2))
@@ -219,7 +233,32 @@ export async function handleListMarkets({
     })
   );
 
-  return enrichedMarkets;
+  const sortedMarkets = [...enrichedMarkets].sort((a, b) => {
+    if (sortBy === "totalBetSize") {
+      return b.totalMarketBets - a.totalMarketBets;
+    }
+
+    if (sortBy === "participants") {
+      return b.participantCount - a.participantCount;
+    }
+
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+
+  const totalItems = sortedMarkets.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / limit));
+  const start = (page - 1) * limit;
+  const items = sortedMarkets.slice(start, start + limit);
+
+  return {
+    items,
+    pagination: {
+      page,
+      limit,
+      totalItems,
+      totalPages,
+    },
+  };
 }
 
 export async function handleGetMarket({
