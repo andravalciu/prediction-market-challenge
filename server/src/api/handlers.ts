@@ -603,6 +603,7 @@ export async function handleArchiveMarket({
 
 export async function handleGetLeaderboard() {
   const users = await db.query.usersTable.findMany({
+    where: eq(usersTable.role, "user"),
     columns: {
       id: true,
       username: true,
