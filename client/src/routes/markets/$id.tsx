@@ -44,6 +44,13 @@ function MarketDetailPage() {
   const [isResolveDialogOpen, setIsResolveDialogOpen] = useState(false);
   const isAdmin = user?.role === "admin";
   const marketId = parseInt(id, 10);
+  const numericBetAmount = Number(betAmount);
+
+  const betAmountError =
+    betAmount.length > 0 &&
+    (Number.isNaN(numericBetAmount) || numericBetAmount <= 0)
+      ? "Bet amount must be greater than 0"
+      : "";
 
   const chartData =
     market?.outcomes.map((outcome) => ({
@@ -80,12 +87,19 @@ function MarketDetailPage() {
       return;
     }
 
+    const numericAmount = Number(betAmount);
+
+    if (Number.isNaN(numericAmount) || numericAmount <= 0) {
+      setError("Bet amount must be a positive number");
+      return;
+    }
+
     try {
       setIsBetting(true);
       setError(null);
-      await api.placeBet(marketId, selectedOutcomeId, parseFloat(betAmount));
+      await api.placeBet(marketId, selectedOutcomeId, numericAmount);
       setBetAmount("");
-      // Reload market to show updated odds
+
       const updated = await api.getMarket(marketId);
       setMarket(updated);
     } catch (err) {
@@ -399,18 +413,29 @@ function MarketDetailPage() {
                       id="betAmount"
                       type="number"
                       step="0.01"
-                      min="0"
+                      min="0.01"
                       value={betAmount}
                       onChange={(e) => setBetAmount(e.target.value)}
                       placeholder="Enter amount"
                       disabled={isBetting}
                     />
+
+                    {betAmountError && (
+                      <p className="text-sm text-destructive">
+                        {betAmountError}
+                      </p>
+                    )}
                   </div>
 
                   <Button
                     className="w-full text-lg py-6"
                     onClick={handlePlaceBet}
-                    disabled={isBetting || !selectedOutcomeId || !betAmount}
+                    disabled={
+                      isBetting ||
+                      !selectedOutcomeId ||
+                      !!betAmountError ||
+                      !betAmount
+                    }
                   >
                     {isBetting ? "Placing bet..." : "Place Bet"}
                   </Button>
