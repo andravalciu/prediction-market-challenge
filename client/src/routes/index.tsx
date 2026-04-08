@@ -5,7 +5,13 @@ import { api, Market } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { MarketCard } from "@/components/market-card";
 import { useNavigate } from "@tanstack/react-router";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 function DashboardPage() {
   const { isAuthenticated, user } = useAuth();
@@ -13,9 +19,13 @@ function DashboardPage() {
   const [markets, setMarkets] = useState<Market[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [status, setStatus] = useState<"active" | "resolved">("active");
+  const [status, setStatus] = useState<"active" | "resolved" | "archived">(
+    "active"
+  );
   const [page, setPage] = useState(1);
-  const [sortBy, setSortBy] = useState<"createdAt" | "totalBetSize" | "participants">("createdAt");
+  const [sortBy, setSortBy] = useState<
+    "createdAt" | "totalBetSize" | "participants"
+  >("createdAt");
   const [pagination, setPagination] = useState<any>(null);
 
   const loadMarkets = async () => {
@@ -45,11 +55,11 @@ function DashboardPage() {
   //da refresh la 5 secunde
   useEffect(() => {
     if (!isAuthenticated) return;
-  
+
     const intervalId = setInterval(() => {
       refreshMarkets();
     }, 5000);
-  
+
     return () => clearInterval(intervalId);
   }, [isAuthenticated, status, page, sortBy]);
 
@@ -65,11 +75,20 @@ function DashboardPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
         <div className="text-center">
-          <h1 className="text-4xl font-bold mb-4 text-gray-900">Prediction Markets</h1>
-          <p className="text-gray-600 mb-8 text-lg">Create and participate in prediction markets</p>
+          <h1 className="text-4xl font-bold mb-4 text-gray-900">
+            Prediction Markets
+          </h1>
+          <p className="text-gray-600 mb-8 text-lg">
+            Create and participate in prediction markets
+          </p>
           <div className="space-x-4">
-            <Button onClick={() => navigate({ to: "/auth/login" })}>Login</Button>
-            <Button variant="outline" onClick={() => navigate({ to: "/auth/register" })}>
+            <Button onClick={() => navigate({ to: "/auth/login" })}>
+              Login
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => navigate({ to: "/auth/register" })}
+            >
               Sign Up
             </Button>
           </div>
@@ -85,14 +104,22 @@ function DashboardPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-4xl font-bold text-gray-900">Markets</h1>
-            <p className="text-gray-600 mt-2">Welcome back, {user?.username}!</p>
+            <p className="text-gray-600 mt-2">
+              Welcome back, {user?.username}!
+            </p>
           </div>
           <div className="flex items-center gap-4">
             {/* Navigation */}
-            <Button variant="outline" onClick={() => navigate({ to: "/leaderboard" })}>
+            <Button
+              variant="outline"
+              onClick={() => navigate({ to: "/leaderboard" })}
+            >
               Leaderboard
             </Button>
-            <Button variant="outline" onClick={() => navigate({ to: "/profile" })}>
+            <Button
+              variant="outline"
+              onClick={() => navigate({ to: "/profile" })}
+            >
               Profile
             </Button>
 
@@ -100,7 +127,10 @@ function DashboardPage() {
             <Button onClick={() => navigate({ to: "/markets/new" })}>
               Create Market
             </Button>
-            <Button variant="outline" onClick={() => navigate({ to: "/auth/logout" })}>
+            <Button
+              variant="outline"
+              onClick={() => navigate({ to: "/auth/logout" })}
+            >
               Logout
             </Button>
           </div>
@@ -119,6 +149,12 @@ function DashboardPage() {
             onClick={() => setStatus("resolved")}
           >
             Resolved Markets
+          </Button>
+          <Button
+            variant={status === "archived" ? "default" : "outline"}
+            onClick={() => setStatus("archived")}
+          >
+            Archived Markets
           </Button>
           <Button
             variant={sortBy === "createdAt" ? "default" : "outline"}
@@ -162,7 +198,8 @@ function DashboardPage() {
             <CardContent className="flex items-center justify-center py-12">
               <div className="text-center">
                 <p className="text-muted-foreground text-lg">
-                  No {status} markets found. {status === "active" && "Create one to get started!"}
+                  No {status} markets found.{" "}
+                  {status === "active" && "Create one to get started!"}
                 </p>
               </div>
             </CardContent>
@@ -175,30 +212,30 @@ function DashboardPage() {
           </div>
         )}
         {pagination && pagination.totalPages > 1 && (
-  <div className="flex items-center justify-between mt-8">
-    <Button
-      variant="outline"
-      onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-      disabled={page === 1}
-    >
-      Previous
-    </Button>
+          <div className="flex items-center justify-between mt-8">
+            <Button
+              variant="outline"
+              onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+              disabled={page === 1}
+            >
+              Previous
+            </Button>
 
-    <p className="text-sm text-muted-foreground">
-      Page {pagination.page} of {pagination.totalPages}
-    </p>
+            <p className="text-sm text-muted-foreground">
+              Page {pagination.page} of {pagination.totalPages}
+            </p>
 
-    <Button
-      variant="outline"
-      onClick={() =>
-        setPage((prev) => Math.min(prev + 1, pagination.totalPages))
-      }
-      disabled={page === pagination.totalPages}
-    >
-      Next
-    </Button>
-  </div>
-)}
+            <Button
+              variant="outline"
+              onClick={() =>
+                setPage((prev) => Math.min(prev + 1, pagination.totalPages))
+              }
+              disabled={page === pagination.totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -45,6 +45,8 @@ function MarketDetailPage() {
   const isAdmin = user?.role === "admin";
   const marketId = parseInt(id, 10);
   const numericBetAmount = Number(betAmount);
+  const [isArchiving, setIsArchiving] = useState(false);
+  const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
 
   const betAmountError =
     betAmount.length > 0 &&
@@ -130,6 +132,23 @@ function MarketDetailPage() {
     }
   };
 
+  const handleArchiveMarket = async () => {
+    try {
+      setIsArchiving(true);
+      setError(null);
+
+      await api.archiveMarket(marketId);
+
+      const updated = await api.getMarket(marketId);
+      setMarket(updated);
+      setIsArchiveDialogOpen(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to archive market");
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -192,7 +211,11 @@ function MarketDetailPage() {
               <Badge
                 variant={market.status === "active" ? "default" : "secondary"}
               >
-                {market.status === "active" ? "Active" : "Resolved"}
+                {market.status === "active"
+                  ? "Active"
+                  : market.status === "resolved"
+                    ? "Resolved"
+                    : "Archived"}
               </Badge>
             </div>
           </CardHeader>
@@ -384,6 +407,56 @@ function MarketDetailPage() {
                           disabled={isResolving || !selectedOutcomeId}
                         >
                           {isResolving ? "Resolving..." : "Confirm Resolution"}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                  <Dialog
+                    open={isArchiveDialogOpen}
+                    onOpenChange={setIsArchiveDialogOpen}
+                  >
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full text-lg py-6 border-slate-300"
+                        disabled={isArchiving}
+                      >
+                        Archive Market
+                      </Button>
+                    </DialogTrigger>
+
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Archive market</DialogTitle>
+                        <DialogDescription>
+                          This will close the market and refund all placed bets
+                          back to users.
+                        </DialogDescription>
+                      </DialogHeader>
+
+                      <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
+                        <p className="text-sm text-muted-foreground">
+                          No winning outcome will be selected. All bettors will
+                          receive their original stake back.
+                        </p>
+                      </div>
+
+                      <DialogFooter className="flex justify-between items-center pt-4">
+                        <Button
+                          variant="ghost"
+                          onClick={() => setIsArchiveDialogOpen(false)}
+                          disabled={isArchiving}
+                        >
+                          Cancel
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          className="border-slate-900 text-slate-900 hover:bg-slate-100"
+                          onClick={handleArchiveMarket}
+                          disabled={isArchiving}
+                        >
+                          {isArchiving ? "Archiving..." : "Confirm Archive"}
                         </Button>
                       </DialogFooter>
                     </DialogContent>

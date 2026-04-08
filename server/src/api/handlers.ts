@@ -533,6 +533,74 @@ export async function handleResolveMarket({
   };
 }
 
+export async function handleArchiveMarket({
+  params,
+  set,
+  user,
+}: {
+  params: { id: number };
+  set: { status: number };
+  user: typeof usersTable.$inferSelect;
+}) {
+  const marketId = params.id;
+
+  if (!user) {
+    set.status = 401;
+    return { error: "Unauthorized" };
+  }
+
+  if (user.role !== "admin") {
+    set.status = 403;
+    return { error: "Admin access required" };
+  }
+
+  const market = await db.query.marketsTable.findFirst({
+    where: eq(marketsTable.id, marketId),
+  });
+
+  if (!market) {
+    set.status = 404;
+    return { error: "Market not found" };
+  }
+
+  if (market.status !== "active") {
+    set.status = 400;
+    return { error: "Only active markets can be archived" };
+  }
+
+  const allBets = await db
+    .select()
+    .from(betsTable)
+    .where(eq(betsTable.marketId, marketId));
+
+  for (const bet of allBets) {
+    await db
+      .update(usersTable)
+      .set({
+        balance: sql`${usersTable.balance} + ${bet.amount}`,
+        updatedAt: new Date(),
+      })
+      .where(eq(usersTable.id, bet.userId));
+  }
+
+  await db
+    .update(marketsTable)
+    .set({
+      status: "archived",
+      resolvedAt: new Date(),
+    })
+    .where(eq(marketsTable.id, marketId));
+
+  set.status = 200;
+  return {
+    success: true,
+    marketId,
+    refundedBets: allBets.length,
+    refundedAmount: allBets.reduce((sum, bet) => sum + bet.amount, 0),
+    status: "archived",
+  };
+}
+
 export async function handleGetLeaderboard() {
   const users = await db.query.usersTable.findMany({
     columns: {

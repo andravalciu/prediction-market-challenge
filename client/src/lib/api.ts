@@ -5,7 +5,7 @@ export interface Market {
   id: number;
   title: string;
   description?: string;
-  status: "active" | "resolved";
+  status: "active" | "resolved" | "archived";
   creator?: string;
   outcomes: MarketOutcome[];
   totalMarketBets: number;
@@ -111,7 +111,7 @@ class ApiClient {
 
   // Markets endpoints
   async listMarkets(
-    status: "active" | "resolved" = "active",
+    status: "active" | "resolved" | "archived" = "active",
     page = 1,
     sortBy = "createdAt"
   ) {
@@ -154,6 +154,12 @@ class ApiClient {
     });
 
     return response;
+  }
+
+  async archiveMarket(marketId: number) {
+    return this.request(`/api/markets/${marketId}/archive`, {
+      method: "POST",
+    });
   }
 
   async getLeaderboard(): Promise<LeaderboardEntry[]> {
