@@ -466,7 +466,7 @@ function MarketDetailPage() {
             )}
 
             {/* Betting Section */}
-            {market.status === "active" && (
+            {market.status === "active" && !isAdmin && (
               <Card className="bg-secondary/5">
                 <CardHeader>
                   <CardTitle>Place Your Bet</CardTitle>

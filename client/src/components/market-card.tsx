@@ -1,4 +1,5 @@
-import { Market } from "@/lib/api";
+import { useState } from "react";
+import { api, Market } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,14 +9,37 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { useNavigate } from "@tanstack/react-router";
 
 interface MarketCardProps {
   market: Market;
+  isAdmin?: boolean;
 }
 
-export function MarketCard({ market }: MarketCardProps) {
+export function MarketCard({ market, isAdmin }: MarketCardProps) {
   const navigate = useNavigate();
+  const [isArchiving, setIsArchiving] = useState(false);
+  const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
+  const handleArchive = async () => {
+    try {
+      setIsArchiving(true);
+      await api.archiveMarket(market.id);
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsArchiving(false);
+    }
+  };
 
   return (
     <Card>
@@ -34,6 +58,7 @@ export function MarketCard({ market }: MarketCardProps) {
           </Badge>
         </div>
       </CardHeader>
+
       <CardContent className="space-y-4">
         {/* Outcomes */}
         <div className="space-y-2">
@@ -63,13 +88,84 @@ export function MarketCard({ market }: MarketCardProps) {
           </p>
         </div>
 
-        {/* Action Button */}
-        <Button
-          className="w-full"
-          onClick={() => navigate({ to: `/markets/${market.id}` })}
-        >
-          {market.status === "active" ? "Place Bet" : "View Results"}
-        </Button>
+        {/* Main Action */}
+        {!isAdmin && (
+          <Button
+            className="w-full"
+            onClick={() => navigate({ to: `/markets/${market.id}` })}
+          >
+            {market.status === "active" ? "Place Bet" : "View Results"}
+          </Button>
+        )}
+
+        {/* Admin Shortcuts */}
+        {isAdmin && market.status === "active" && (
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="flex-1"
+              onClick={() => navigate({ to: `/markets/${market.id}` })}
+            >
+              Resolve
+            </Button>
+
+            <Dialog
+              open={isArchiveDialogOpen}
+              onOpenChange={setIsArchiveDialogOpen}
+            >
+              <DialogTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
+                  disabled={isArchiving}
+                >
+                  Archive
+                </Button>
+              </DialogTrigger>
+
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Archive market</DialogTitle>
+                  <DialogDescription>
+                    This will close the market and refund all placed bets back
+                    to users.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-sm text-muted-foreground">
+                    No winning outcome will be selected. All bettors will
+                    receive their original stake back.
+                  </p>
+                </div>
+
+                <DialogFooter className="flex justify-between items-center pt-4">
+                  <Button
+                    variant="ghost"
+                    onClick={() => setIsArchiveDialogOpen(false)}
+                    disabled={isArchiving}
+                  >
+                    Cancel
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="border-slate-900 text-slate-900 hover:bg-slate-100"
+                    onClick={async () => {
+                      await handleArchive();
+                      setIsArchiveDialogOpen(false);
+                    }}
+                    disabled={isArchiving}
+                  >
+                    {isArchiving ? "Archiving..." : "Confirm Archive"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
