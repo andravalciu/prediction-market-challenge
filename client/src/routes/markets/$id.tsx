@@ -15,6 +15,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import {
@@ -344,11 +351,34 @@ function MarketDetailPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Selected Winning Outcome</Label>
-                    <div className="p-3 bg-white border rounded-md">
-                      {market.outcomes.find((o) => o.id === selectedOutcomeId)
-                        ?.title || "None selected"}
-                    </div>
+                    <Label htmlFor="winningOutcome">
+                      Selected Winning Outcome
+                    </Label>
+
+                    <Select
+                      value={selectedOutcomeId ? String(selectedOutcomeId) : ""}
+                      onValueChange={(value) =>
+                        setSelectedOutcomeId(Number(value))
+                      }
+                    >
+                      <SelectTrigger
+                        id="winningOutcome"
+                        className="w-full bg-white"
+                      >
+                        <SelectValue placeholder="Select winning outcome" />
+                      </SelectTrigger>
+
+                      <SelectContent>
+                        {market.outcomes.map((outcome) => (
+                          <SelectItem
+                            key={outcome.id}
+                            value={String(outcome.id)}
+                          >
+                            {outcome.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <Dialog
@@ -473,11 +503,32 @@ function MarketDetailPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Selected Outcome</Label>
-                    <div className="p-3 bg-white border border-secondary rounded-md">
-                      {market.outcomes.find((o) => o.id === selectedOutcomeId)
-                        ?.title || "None selected"}
-                    </div>
+                    <Label htmlFor="betOutcome">Selected Outcome</Label>
+
+                    <Select
+                      value={selectedOutcomeId ? String(selectedOutcomeId) : ""}
+                      onValueChange={(value) =>
+                        setSelectedOutcomeId(Number(value))
+                      }
+                    >
+                      <SelectTrigger
+                        id="betOutcome"
+                        className="w-full bg-white"
+                      >
+                        <SelectValue placeholder="Select outcome" />
+                      </SelectTrigger>
+
+                      <SelectContent>
+                        {market.outcomes.map((outcome) => (
+                          <SelectItem
+                            key={outcome.id}
+                            value={String(outcome.id)}
+                          >
+                            {outcome.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-2">

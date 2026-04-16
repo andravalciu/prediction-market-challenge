@@ -137,46 +137,58 @@ function DashboardPage() {
         </div>
 
         {/* Filters */}
-        <div className="mb-6 flex flex-wrap gap-4 items-center">
-          <Button
-            variant={status === "active" ? "default" : "outline"}
-            onClick={() => setStatus("active")}
-          >
-            Active Markets
-          </Button>
-          <Button
-            variant={status === "resolved" ? "default" : "outline"}
-            onClick={() => setStatus("resolved")}
-          >
-            Resolved Markets
-          </Button>
-          <Button
-            variant={status === "archived" ? "default" : "outline"}
-            onClick={() => setStatus("archived")}
-          >
-            Archived Markets
-          </Button>
-          <Button
-            variant={sortBy === "createdAt" ? "default" : "outline"}
-            onClick={() => setSortBy("createdAt")}
-          >
-            Newest
-          </Button>
-          <Button
-            variant={sortBy === "totalBetSize" ? "default" : "outline"}
-            onClick={() => setSortBy("totalBetSize")}
-          >
-            Highest Pool
-          </Button>
-          <Button
-            variant={sortBy === "participants" ? "default" : "outline"}
-            onClick={() => setSortBy("participants")}
-          >
-            Most Participants
-          </Button>
-          <Button variant="outline" onClick={loadMarkets} disabled={isLoading}>
-            {isLoading ? "Refreshing..." : "Refresh"}
-          </Button>
+        <div className="mb-6 space-y-4">
+          {/* MARKET FILTERS */}
+          <div className="flex flex-wrap gap-4">
+            <Button
+              variant={status === "active" ? "default" : "outline"}
+              onClick={() => setStatus("active")}
+            >
+              Active Markets
+            </Button>
+
+            <Button
+              variant={status === "resolved" ? "default" : "outline"}
+              onClick={() => setStatus("resolved")}
+            >
+              Resolved Markets
+            </Button>
+
+            <Button
+              variant={status === "archived" ? "default" : "outline"}
+              onClick={() => setStatus("archived")}
+            >
+              Archived Markets
+            </Button>
+          </div>
+
+          {/* SORTING */}
+          <div className="flex flex-wrap gap-4">
+            <Button
+              variant={sortBy === "createdAt" ? "default" : "outline"}
+              onClick={() => setSortBy("createdAt")}
+            >
+              Newest
+            </Button>
+
+            <Button
+              variant={sortBy === "totalBetSize" ? "default" : "outline"}
+              onClick={() => setSortBy("totalBetSize")}
+            >
+              Highest Pool
+            </Button>
+
+            <Button
+              variant={sortBy === "participants" ? "default" : "outline"}
+              onClick={() => setSortBy("participants")}
+            >
+              Most Participants
+            </Button>
+
+            <Button variant="outline" onClick={loadMarkets}>
+              Refresh
+            </Button>
+          </div>
         </div>
 
         {/* Error State */}
