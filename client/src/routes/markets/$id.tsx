@@ -68,7 +68,7 @@ function MarketDetailPage() {
       value: outcome.odds,
     })) ?? [];
 
-  const CHART_COLORS = ["#111827", "#6B7280", "#D1D5DB", "#9CA3AF"];
+  const CHART_COLORS = ["#2563eb", "#16a34a", "#f59e0b", "#dc2626"];
 
   useEffect(() => {
     const loadMarket = async () => {
