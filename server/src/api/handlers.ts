@@ -387,6 +387,11 @@ export async function handlePlaceBet({
     where: eq(usersTable.id, user.id),
   });
 
+  if (currentUser.role === "admin") {
+    set.status = 403;
+    return { error: "Admins are not allowed to place bets" };
+  }
+
   if (!currentUser) {
     set.status = 404;
     return { error: "User not found" };
