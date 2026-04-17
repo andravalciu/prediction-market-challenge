@@ -103,7 +103,13 @@ function DashboardPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900">Markets</h1>
+            <h1 className="text-5xl font-bold tracking-tight text-slate-900">
+              Prediction Markets
+            </h1>
+            <p className="text-slate-600 mt-3 max-w-2xl">
+              Track live odds, browse active markets, and manage outcomes in
+              real time.
+            </p>
             <p className="text-gray-600 mt-2">
               Welcome back, {user?.username}!
             </p>
@@ -137,9 +143,13 @@ function DashboardPage() {
         </div>
 
         {/* Filters */}
-        <div className="mb-6 space-y-4">
+        <div className="mb-8 space-y-4">
           {/* MARKET FILTERS */}
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-sm font-medium text-slate-500 shrink-0">
+              Browse by status:
+            </p>
+
             <Button
               variant={status === "active" ? "default" : "outline"}
               onClick={() => setStatus("active")}
@@ -161,9 +171,12 @@ function DashboardPage() {
               Archived Markets
             </Button>
           </div>
-
           {/* SORTING */}
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-sm font-medium text-slate-500 shrink-0">
+              Sort markets:
+            </p>
+
             <Button
               variant={sortBy === "createdAt" ? "default" : "outline"}
               onClick={() => setSortBy("createdAt")}
@@ -217,7 +230,7 @@ function DashboardPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
             {markets.map((market) => (
               <MarketCard
                 key={market.id}
