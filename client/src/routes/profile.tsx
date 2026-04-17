@@ -88,7 +88,9 @@ function ProfilePage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-4xl">Profile</CardTitle>
+            <CardTitle>
+              <div className="text-4xl font-bold text-gray-900">Profile</div>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (

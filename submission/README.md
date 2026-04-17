@@ -2,11 +2,11 @@
 
 ## Short Description
 
-This project is a full-stack prediction markets application where users can create markets, place bets on different outcomes, and track results in real time.
+This project is a full-stack prediction markets application that allows users to create markets, place bets on different outcomes, and track results in real time.
 
-It supports both user and admin roles, real-time updates via polling, market resolution with proportional payout distribution, and full lifecycle management (active, resolved, archived markets).
+The platform supports both user and admin roles, with clear separation of responsibilities (users place bets, admins resolve and manage markets). It includes real-time updates via polling, proportional payout distribution, and full market lifecycle management (active, resolved, archived).
 
-The application focuses on clean UI/UX, real-time data handling, and end-to-end functionality from database to frontend.
+The application emphasizes clean UI/UX, robust API design, and end-to-end functionality, covering everything from database operations to an interactive frontend experience.
 
 ---
 
@@ -16,13 +16,13 @@ The application focuses on clean UI/UX, real-time data handling, and end-to-end 
 
 Covers browsing markets, placing bets, and tracking activity in the profile.
 
-https://drive.google.com/file/d/1XbIL5XZJ3juE5ramPAN-79K19UdrCJHk/view?usp=sharing
+https://drive.google.com/file/d/1RWcM9igWKE-xsnyEa1ZTCEeyqfzi8_XA/view?usp=sharing
 
 ### Admin Flow
 
 Covers resolving and archiving markets, including payout distribution.
 
-https://drive.google.com/file/d/1GcQQJ158CI9ZsuEDbiFJ7QL-g3L0NaR-/view?usp=sharing
+https://drive.google.com/file/d/1NOS9kX4iOMhxJxaJTnBKD9VC8kcQUJnc/view?usp=sharing
 
 ---
 

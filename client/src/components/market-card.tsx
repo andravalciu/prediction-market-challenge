@@ -29,6 +29,7 @@ export function MarketCard({ market, isAdmin }: MarketCardProps) {
   const navigate = useNavigate();
   const [isArchiving, setIsArchiving] = useState(false);
   const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
+
   const handleArchive = async () => {
     try {
       setIsArchiving(true);
@@ -42,7 +43,7 @@ export function MarketCard({ market, isAdmin }: MarketCardProps) {
   };
 
   return (
-    <Card>
+    <Card className="flex flex-col">
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex-1">
@@ -59,8 +60,8 @@ export function MarketCard({ market, isAdmin }: MarketCardProps) {
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
-        {/* Outcomes */}
+      <CardContent className="flex flex-col flex-1 space-y-4">
+        {/* Outcomes — cresc cât au nevoie, indiferent de câte sunt */}
         <div className="space-y-2">
           {market.outcomes.map((outcome) => (
             <div
@@ -80,92 +81,95 @@ export function MarketCard({ market, isAdmin }: MarketCardProps) {
           ))}
         </div>
 
-        {/* Total Market Value */}
-        <div className="p-3 rounded-md border border-primary/20 bg-primary/5">
-          <p className="text-xs text-muted-foreground">Total Market Value</p>
-          <p className="text-2xl font-bold text-primary">
-            ${market.totalMarketBets.toFixed(2)}
-          </p>
-        </div>
+        {/* Spacer — împinge TMV + buton mereu în jos */}
+        <div className="flex-1" />
 
-        {/* Main Action */}
-        {!isAdmin && (
-          <Button
-            className="w-full"
-            onClick={() => navigate({ to: `/markets/${market.id}` })}
-          >
-            {market.status === "active" ? "Place Bet" : "View Results"}
-          </Button>
-        )}
+        {/* Bloc fix la baza cardului: TMV + acțiune */}
+        <div className="space-y-3">
+          <div className="p-3 rounded-md border border-primary/20 bg-primary/5">
+            <p className="text-xs text-muted-foreground">Total Market Value</p>
+            <p className="text-2xl font-bold text-primary">
+              ${market.totalMarketBets.toFixed(2)}
+            </p>
+          </div>
 
-        {/* Admin Shortcuts */}
-        {isAdmin && market.status === "active" && (
-          <div className="flex gap-2">
+          {!isAdmin && (
             <Button
-              size="sm"
-              variant="outline"
-              className="flex-1"
+              className="w-full"
               onClick={() => navigate({ to: `/markets/${market.id}` })}
             >
-              Resolve
+              {market.status === "active" ? "Place Bet" : "View Results"}
             </Button>
+          )}
 
-            <Dialog
-              open={isArchiveDialogOpen}
-              onOpenChange={setIsArchiveDialogOpen}
-            >
-              <DialogTrigger asChild>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
-                  disabled={isArchiving}
-                >
-                  Archive
-                </Button>
-              </DialogTrigger>
+          {isAdmin && market.status === "active" && (
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1"
+                onClick={() => navigate({ to: `/markets/${market.id}` })}
+              >
+                Resolve
+              </Button>
 
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Archive market</DialogTitle>
-                  <DialogDescription>
-                    This will close the market and refund all placed bets back
-                    to users.
-                  </DialogDescription>
-                </DialogHeader>
-
-                <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-sm text-muted-foreground">
-                    No winning outcome will be selected. All bettors will
-                    receive their original stake back.
-                  </p>
-                </div>
-
-                <DialogFooter className="flex justify-between items-center pt-4">
+              <Dialog
+                open={isArchiveDialogOpen}
+                onOpenChange={setIsArchiveDialogOpen}
+              >
+                <DialogTrigger asChild>
                   <Button
-                    variant="ghost"
-                    onClick={() => setIsArchiveDialogOpen(false)}
-                    disabled={isArchiving}
-                  >
-                    Cancel
-                  </Button>
-
-                  <Button
+                    size="sm"
                     variant="outline"
-                    className="border-slate-900 text-slate-900 hover:bg-slate-100"
-                    onClick={async () => {
-                      await handleArchive();
-                      setIsArchiveDialogOpen(false);
-                    }}
+                    className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
                     disabled={isArchiving}
                   >
-                    {isArchiving ? "Archiving..." : "Confirm Archive"}
+                    Archive
                   </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </div>
-        )}
+                </DialogTrigger>
+
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Archive market</DialogTitle>
+                    <DialogDescription>
+                      This will close the market and refund all placed bets back
+                      to users.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
+                    <p className="text-sm text-muted-foreground">
+                      No winning outcome will be selected. All bettors will
+                      receive their original stake back.
+                    </p>
+                  </div>
+
+                  <DialogFooter className="flex justify-between items-center pt-4">
+                    <Button
+                      variant="ghost"
+                      onClick={() => setIsArchiveDialogOpen(false)}
+                      disabled={isArchiving}
+                    >
+                      Cancel
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      className="border-slate-900 text-slate-900 hover:bg-slate-100"
+                      onClick={async () => {
+                        await handleArchive();
+                        setIsArchiveDialogOpen(false);
+                      }}
+                      disabled={isArchiving}
+                    >
+                      {isArchiving ? "Archiving..." : "Confirm Archive"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

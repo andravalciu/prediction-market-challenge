@@ -10,8 +10,12 @@ function NotFoundComponent() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="text-center">
         <h1 className="text-6xl font-bold mb-4 text-gray-900">404</h1>
-        <p className="text-2xl font-semibold text-gray-700 mb-2">Page Not Found</p>
-        <p className="text-gray-600 mb-8">The page you are looking for does not exist.</p>
+        <p className="text-2xl font-semibold text-gray-700 mb-2">
+          Page Not Found
+        </p>
+        <p className="text-gray-600 mb-8">
+          The page you are looking for does not exist.
+        </p>
         <a
           href="/"
           className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
