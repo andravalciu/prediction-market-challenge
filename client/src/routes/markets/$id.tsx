@@ -54,6 +54,7 @@ function MarketDetailPage() {
   const numericBetAmount = Number(betAmount);
   const [isArchiving, setIsArchiving] = useState(false);
   const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const betAmountError =
     betAmount.length > 0 &&
@@ -108,6 +109,11 @@ function MarketDetailPage() {
       setError(null);
       await api.placeBet(marketId, selectedOutcomeId, numericAmount);
       setBetAmount("");
+      setSuccessMessage("Bet placed successfully");
+
+      setTimeout(() => {
+        setSuccessMessage(null);
+      }, 3000);
 
       const updated = await api.getMarket(marketId);
       setMarket(updated);
@@ -563,6 +569,12 @@ function MarketDetailPage() {
                   >
                     {isBetting ? "Placing bet..." : "Place Bet"}
                   </Button>
+
+                  {successMessage && (
+                    <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                      {successMessage}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
