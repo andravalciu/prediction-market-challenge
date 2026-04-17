@@ -27,7 +27,7 @@ describe("Auth", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, email, password }),
-      }),
+      })
     );
 
     expect(res.status).toBe(201);
@@ -47,7 +47,7 @@ describe("Auth", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, email, password }),
-      }),
+      })
     );
 
     expect(res.status).toBe(409);
@@ -59,7 +59,7 @@ describe("Auth", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: "ab", email: "bad", password: "12" }),
-      }),
+      })
     );
 
     expect(res.status).toBe(400);
@@ -73,7 +73,7 @@ describe("Auth", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
-      }),
+      })
     );
 
     expect(res.status).toBe(200);
@@ -87,8 +87,11 @@ describe("Auth", () => {
       new Request(`${BASE}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: "nobody@example.com", password: "wrong" }),
-      }),
+        body: JSON.stringify({
+          email: "nobody@example.com",
+          password: "wrong",
+        }),
+      })
     );
 
     expect(res.status).toBe(401);
@@ -105,7 +108,7 @@ describe("Markets", () => {
           title: "Test market",
           outcomes: ["Yes", "No"],
         }),
-      }),
+      })
     );
 
     expect(res.status).toBe(401);
@@ -124,7 +127,7 @@ describe("Markets", () => {
           description: "Weather prediction",
           outcomes: ["Yes", "No"],
         }),
-      }),
+      })
     );
 
     expect(res.status).toBe(201);
@@ -146,7 +149,7 @@ describe("Markets", () => {
           Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify({ title: "Hi", outcomes: ["Only one"] }),
-      }),
+      })
     );
 
     expect(res.status).toBe(400);
@@ -159,15 +162,22 @@ describe("Markets", () => {
 
     expect(res.status).toBe(200);
     const data = await res.json();
-    expect(Array.isArray(data)).toBe(true);
-    expect(data.length).toBeGreaterThan(0);
-    expect(data[0].id).toBeDefined();
-    expect(data[0].title).toBeDefined();
-    expect(data[0].outcomes).toBeDefined();
+
+    expect(data.items).toBeDefined();
+    expect(Array.isArray(data.items)).toBe(true);
+    expect(data.items.length).toBeGreaterThan(0);
+    expect(data.items[0].id).toBeDefined();
+    expect(data.items[0].title).toBeDefined();
+    expect(data.items[0].outcomes).toBeDefined();
+
+    expect(data.pagination).toBeDefined();
+    expect(data.pagination.page).toBe(1);
   });
 
   it("GET /api/markets/:id — returns market detail", async () => {
-    const res = await app.handle(new Request(`${BASE}/api/markets/${marketId}`));
+    const res = await app.handle(
+      new Request(`${BASE}/api/markets/${marketId}`)
+    );
 
     expect(res.status).toBe(200);
     const data = await res.json();
@@ -191,7 +201,7 @@ describe("Bets", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ outcomeId, amount: 100 }),
-      }),
+      })
     );
 
     expect(res.status).toBe(401);
@@ -206,7 +216,7 @@ describe("Bets", () => {
           Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify({ outcomeId, amount: 50 }),
-      }),
+      })
     );
 
     expect(res.status).toBe(201);
@@ -227,7 +237,7 @@ describe("Bets", () => {
           Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify({ outcomeId, amount: -10 }),
-      }),
+      })
     );
 
     expect(res.status).toBe(400);
